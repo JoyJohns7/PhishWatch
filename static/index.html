@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhishWatch — Detection Console</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="brand">
+      <span class="dot"></span>
+      PhishWatch
+      <small>DETECTION CONSOLE</small>
+    </div>
+    <div class="analyze-bar">
+      <span>&gt;</span>
+      <input id="urlInput" placeholder="paste a URL to analyze…" aria-label="URL to analyze"
+             autocomplete="off" spellcheck="false">
+      <button id="analyzeBtn">ANALYZE</button>
+    </div>
+    <button id="emailBtn" class="email-btn" title="Analyze a full email">✉ EMAIL</button>
+    <div class="status-cluster">
+      <div class="live"><span class="ring" id="backendRing"></span><span id="backendLabel">CONNECTING…</span></div>
+    </div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- KPI ROW -->
+    <div class="kpis">
+      <div class="kpi">
+        <div class="label">Scans (24h)</div>
+        <div class="value" id="kpiScans24h">—</div>
+        <div class="delta" id="kpiScansTotal">total —</div>
+      </div>
+      <div class="kpi high">
+        <div class="label">Flagged High+</div>
+        <div class="value" id="kpiFlagged">—</div>
+        <div class="delta">high &amp; critical</div>
+      </div>
+      <div class="kpi crit">
+        <div class="label">Critical Verdicts</div>
+        <div class="value" id="kpiCritical">—</div>
+        <div class="delta">score ≥ 80</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Avg Risk Score</div>
+        <div class="value" id="kpiAvg">—</div>
+        <div class="delta">across all scans</div>
+      </div>
+    </div>
+
+    <div class="grid">
+
+      <!-- LEFT COLUMN -->
+      <div class="col-stack">
+
+        <!-- HERO: LATEST VERDICT -->
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Latest Analysis</h2>
+            <div class="meta" id="latestMeta">no scans yet</div>
+          </div>
+          <div class="panel-body">
+            <div class="verdict">
+              <div class="verdict-score">
+                <div class="ring-wrap">
+                  <svg viewBox="0 0 120 120" width="116" height="116">
+                    <circle cx="60" cy="60" r="52" fill="none" stroke="var(--border-lit)" stroke-width="11"/>
+                    <circle id="scoreArc" cx="60" cy="60" r="52" fill="none" stroke="var(--low)"
+                            stroke-width="11" stroke-linecap="round"
+                            stroke-dasharray="0 326.7" transform="rotate(-90 60 60)"/>
+                  </svg>
+                  <div class="num"><b id="latestScore">—</b><small>RISK</small></div>
+                </div>
+                <div class="verdict-badge" id="latestVerdict">AWAITING SCAN</div>
+              </div>
+              <div class="verdict-detail">
+                <div class="target-line" id="latestTarget">
+                  <span class="lbl">Run a scan to populate the console.</span>
+                </div>
+                <div class="signals" id="latestSignals"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- NETWORK / SENDER CHECKS (adapts to scan kind) -->
+        <div class="panel">
+          <div class="panel-head">
+            <h2 id="checksTitle">Network Checks</h2>
+            <div class="meta" id="checksMeta">WHOIS · Redirect · TLS</div>
+          </div>
+          <div class="panel-body">
+            <div class="auth-row" id="checksRow">
+              <div class="auth"><div class="k">—</div><div class="v">—</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RECENT DETECTIONS -->
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Recent Detections</h2>
+            <div class="meta">auto-refresh 15s</div>
+          </div>
+          <div class="panel-body table-body">
+            <table>
+              <thead>
+                <tr><th>Host</th><th>Verdict</th><th>Score</th><th>Time</th></tr>
+              </thead>
+              <tbody id="recentBody">
+                <tr><td colspan="4" class="empty">No scans recorded yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div class="col-stack">
+
+        <!-- RISK DISTRIBUTION -->
+        <div class="panel">
+          <div class="panel-head"><h2>Risk Distribution</h2><div class="meta" id="distTotal">—</div></div>
+          <div class="panel-body">
+            <div class="donut-wrap">
+              <svg viewBox="0 0 42 42" width="118" height="118">
+                <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--border-lit)" stroke-width="6"/>
+                <circle id="segLow"  cx="21" cy="21" r="15.9" fill="none" stroke="var(--low)"  stroke-width="6" stroke-dasharray="0 100" stroke-dashoffset="25"/>
+                <circle id="segMed"  cx="21" cy="21" r="15.9" fill="none" stroke="var(--med)"  stroke-width="6" stroke-dasharray="0 100" stroke-dashoffset="25"/>
+                <circle id="segHigh" cx="21" cy="21" r="15.9" fill="none" stroke="var(--high)" stroke-width="6" stroke-dasharray="0 100" stroke-dashoffset="25"/>
+                <circle id="segCrit" cx="21" cy="21" r="15.9" fill="none" stroke="var(--crit)" stroke-width="6" stroke-dasharray="0 100" stroke-dashoffset="25"/>
+              </svg>
+              <div class="legend">
+                <div class="item"><span class="sw" style="background:var(--low)"></span>Low<span class="ct" id="ctLow">0</span></div>
+                <div class="item"><span class="sw" style="background:var(--med)"></span>Caution<span class="ct" id="ctMed">0</span></div>
+                <div class="item"><span class="sw" style="background:var(--high)"></span>High<span class="ct" id="ctHigh">0</span></div>
+                <div class="item"><span class="sw" style="background:var(--crit)"></span>Critical<span class="ct" id="ctCrit">0</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SCAN VOLUME -->
+        <div class="panel">
+          <div class="panel-head"><h2>Scan Volume</h2><div class="meta">12h · hourly</div></div>
+          <div class="panel-body">
+            <div class="bars" id="volumeBars"></div>
+          </div>
+        </div>
+
+        <!-- LOOKUP CACHE -->
+        <div class="panel">
+          <div class="panel-head"><h2>Lookup Cache</h2><div class="meta">TTLCache · in-memory</div></div>
+          <div class="panel-body">
+            <div class="cache-strip">
+              <div class="c"><div class="k">Hit Rate</div><div class="v good" id="cacheHit">—</div></div>
+              <div class="c"><div class="k">Entries</div><div class="v" id="cacheEntries">—</div></div>
+              <div class="c"><div class="k">Avg Saved</div><div class="v" id="cacheSaved">—</div></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <footer>PhishWatch · live console · data from your FastAPI backend</footer>
+  </div>
+
+  <!-- EMAIL ANALYSIS MODAL -->
+  <div class="modal-overlay" id="emailModal" hidden>
+    <div class="modal">
+      <div class="modal-head">
+        <h2>Analyze Email</h2>
+        <button class="modal-close" id="emailClose" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-hint">Paste a full email — either a raw <code>.eml</code> (with headers) or
+          just the text copied out of your mail client. Headers like
+          <code>Authentication-Results</code> let it read SPF/DKIM/DMARC; without them it still
+          analyzes the sender and body.</p>
+        <textarea id="emailInput" spellcheck="false"
+          placeholder="From: Name &lt;sender@example.com&gt;&#10;Subject: …&#10;&#10;Dear …"></textarea>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-ghost" id="emailCancel">Cancel</button>
+        <button class="btn-primary" id="emailAnalyze">Analyze Email</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
