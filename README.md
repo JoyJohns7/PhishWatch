@@ -12,6 +12,8 @@ pip install -r requirements.txt
 uvicorn app:app --reload
 ```
 
+<img width="1915" height="947" alt="Screenshot 2026-06-26 184814" src="https://github.com/user-attachments/assets/fc4944e3-9b09-4dd0-a866-0f40350f46c9" />
+
 - Dashboard: <http://127.0.0.1:8000/>
 - API docs:  <http://127.0.0.1:8000/docs>
 
